@@ -68,18 +68,58 @@ function detectPaddyForYear(year) {
     .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
     .map(addIndices);
 
-  // 各期間の中央値画像を取得 / Get median images for each period
+  // データ数を確認 / Check data availability
+  var collectionSize = s2Collection.size();
+  print('  Year ' + year + ' - Available images:', collectionSize);
+
+  // 全期間の中央値をフォールバックとして使用 / Use full period median as fallback
+  var fallbackImage = s2Collection.median();
+
+  // 各期間の中央値画像を取得（データがない場合はフォールバック使用）
+  // Get median images for each period (use fallback if no data)
   var plantingPeriod = s2Collection.filterDate(plantingStart, plantingEnd);
-  var plantingNDVI = plantingPeriod.select('NDVI').median();
-  var plantingNDWI = plantingPeriod.select('NDWI').median();
-  var plantingLSWI = plantingPeriod.select('LSWI').median();
-  var plantingMNDWI = plantingPeriod.select('MNDWI').median();
+  var plantingNDVI = ee.Algorithms.If(
+    plantingPeriod.size().gt(0),
+    plantingPeriod.select('NDVI').median(),
+    fallbackImage.select('NDVI')
+  );
+  var plantingNDWI = ee.Algorithms.If(
+    plantingPeriod.size().gt(0),
+    plantingPeriod.select('NDWI').median(),
+    fallbackImage.select('NDWI')
+  );
+  var plantingLSWI = ee.Algorithms.If(
+    plantingPeriod.size().gt(0),
+    plantingPeriod.select('LSWI').median(),
+    fallbackImage.select('LSWI')
+  );
+  var plantingMNDWI = ee.Algorithms.If(
+    plantingPeriod.size().gt(0),
+    plantingPeriod.select('MNDWI').median(),
+    fallbackImage.select('MNDWI')
+  );
 
   var growingPeriod = s2Collection.filterDate(growingStart, growingEnd);
-  var growingNDVI = growingPeriod.select('NDVI').median();
+  var growingNDVI = ee.Algorithms.If(
+    growingPeriod.size().gt(0),
+    growingPeriod.select('NDVI').median(),
+    fallbackImage.select('NDVI')
+  );
 
   var harvestPeriod = s2Collection.filterDate(harvestStart, harvestEnd);
-  var harvestNDVI = harvestPeriod.select('NDVI').median();
+  var harvestNDVI = ee.Algorithms.If(
+    harvestPeriod.size().gt(0),
+    harvestPeriod.select('NDVI').median(),
+    fallbackImage.select('NDVI')
+  );
+
+  // 画像にキャスト / Cast to images
+  plantingNDVI = ee.Image(plantingNDVI);
+  plantingNDWI = ee.Image(plantingNDWI);
+  plantingLSWI = ee.Image(plantingLSWI);
+  plantingMNDWI = ee.Image(plantingMNDWI);
+  growingNDVI = ee.Image(growingNDVI);
+  harvestNDVI = ee.Image(harvestNDVI);
 
   // 水田の検出 / Detect paddy fields
   // 水田の特徴:
