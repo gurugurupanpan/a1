@@ -1,0 +1,17 @@
+# Google Earth Engine API
+earthengine-api>=0.1.384
+
+# Geographic data processing (optional, for advanced features)
+geopandas>=0.14.0
+shapely>=2.0.0
+
+# Data processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Visualization (optional)
+matplotlib>=3.7.0
+folium>=0.14.0
+
+# HTTP requests (for API interactions)
+requests>=2.31.0
