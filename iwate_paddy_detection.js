@@ -1,11 +1,17 @@
-// 岩手県水田面積判別スクリプト (Google Earth Engine Code Editor用)
-// Iwate Prefecture Paddy Field Detection Script (for GEE Code Editor)
+// ==========================================
+// 岩手県水田検出システム（複数年対応版）
+// Iwate Prefecture Paddy Field Detection System (Multi-Year)
+// ==========================================
 
 // ============================================================================
 // このスクリプトをGoogle Earth Engine Code Editorにコピーして実行してください
 // Copy this script to Google Earth Engine Code Editor and run it
 // https://code.earthengine.google.com/
 // ============================================================================
+
+// ==========================================
+// 1. 基本設定
+// ==========================================
 
 // 岩手県の境界を定義 / Define Iwate Prefecture boundary
 // 座標は岩手県のおおよその範囲 / Coordinates are approximate bounds of Iwate
@@ -24,146 +30,234 @@ var iwateBounds = ee.Geometry.Polygon([
 // マップの中心を岩手県に設定 / Center map on Iwate Prefecture
 Map.centerObject(iwateBounds, 9);
 
-// 対象年度の設定 / Set target year
-var targetYear = 2024;
+// 対象年度の設定（2018-2025） / Set target years (2018-2025)
+var years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 
-// 各期間の設定 / Define periods
-var plantingStart = ee.Date.fromYMD(targetYear, 5, 1);
-var plantingEnd = ee.Date.fromYMD(targetYear, 6, 30);
-var growingStart = ee.Date.fromYMD(targetYear, 7, 1);
-var growingEnd = ee.Date.fromYMD(targetYear, 8, 31);
-var harvestStart = ee.Date.fromYMD(targetYear, 9, 1);
-var harvestEnd = ee.Date.fromYMD(targetYear, 9, 30);
+// ==========================================
+// 2. 補助関数の定義
+// ==========================================
 
 // インデックスを追加する関数 / Function to add indices
 var addIndices = function(image) {
   var ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
   var ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
   var lswi = image.normalizedDifference(['B8', 'B11']).rename('LSWI');
-  return image.addBands(ndvi).addBands(ndwi).addBands(lswi);
+  var mndwi = image.normalizedDifference(['B3', 'B11']).rename('MNDWI');
+  return image.addBands([ndvi, ndwi, lswi, mndwi]);
 };
 
-// Sentinel-2データの読み込み / Load Sentinel-2 data
-var s2Collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-  .filterBounds(iwateBounds)
-  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
-  .map(addIndices);
+// ==========================================
+// 3. 単一年次の水田検出関数
+// ==========================================
 
-print('Total Sentinel-2 images:', s2Collection.size());
+function detectPaddyForYear(year) {
+  print('Processing year: ' + year);
 
-// 各期間の中央値画像を取得 / Get median images for each period
-var plantingPeriod = s2Collection.filterDate(plantingStart, plantingEnd);
-var plantingNDVI = plantingPeriod.select('NDVI').median();
-var plantingNDWI = plantingPeriod.select('NDWI').median();
-var plantingLSWI = plantingPeriod.select('LSWI').median();
+  // 各期間の設定 / Define periods
+  var plantingStart = ee.Date.fromYMD(year, 5, 1);
+  var plantingEnd = ee.Date.fromYMD(year, 6, 30);
+  var growingStart = ee.Date.fromYMD(year, 7, 1);
+  var growingEnd = ee.Date.fromYMD(year, 8, 31);
+  var harvestStart = ee.Date.fromYMD(year, 9, 1);
+  var harvestEnd = ee.Date.fromYMD(year, 9, 30);
 
-var growingPeriod = s2Collection.filterDate(growingStart, growingEnd);
-var growingNDVI = growingPeriod.select('NDVI').median();
+  // Sentinel-2データの読み込み / Load Sentinel-2 data
+  var s2Collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+    .filterBounds(iwateBounds)
+    .filterDate(plantingStart, harvestEnd)
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+    .map(addIndices);
 
-var harvestPeriod = s2Collection.filterDate(harvestStart, harvestEnd);
-var harvestNDVI = harvestPeriod.select('NDVI').median();
+  // 各期間の中央値画像を取得 / Get median images for each period
+  var plantingPeriod = s2Collection.filterDate(plantingStart, plantingEnd);
+  var plantingNDVI = plantingPeriod.select('NDVI').median();
+  var plantingNDWI = plantingPeriod.select('NDWI').median();
+  var plantingLSWI = plantingPeriod.select('LSWI').median();
+  var plantingMNDWI = plantingPeriod.select('MNDWI').median();
 
-print('Planting period images:', plantingPeriod.size());
-print('Growing period images:', growingPeriod.select('NDVI').median());
-print('Harvest period images:', harvestPeriod.size());
+  var growingPeriod = s2Collection.filterDate(growingStart, growingEnd);
+  var growingNDVI = growingPeriod.select('NDVI').median();
 
-// Sentinel-1 SARデータの読み込み / Load Sentinel-1 SAR data
-var s1 = ee.ImageCollection('COPERNICUS/S1_GRD')
-  .filterBounds(iwateBounds)
-  .filterDate(plantingStart, plantingEnd)
-  .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
-  .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
-  .filter(ee.Filter.eq('instrumentMode', 'IW'));
+  var harvestPeriod = s2Collection.filterDate(harvestStart, harvestEnd);
+  var harvestNDVI = harvestPeriod.select('NDVI').median();
 
-var s1Median = s1.select('VV').median();
-print('Sentinel-1 SAR images:', s1.size());
+  // 水田の検出 / Detect paddy fields
+  // 水田の特徴:
+  // 1. 田植え期: 低いNDVI、高いNDWI/MNDWI (水面)
+  // 2. 生育期: 高いNDVI (緑の稲)
+  // 3. 収穫前: 中程度のNDVI
+  var waterCondition = plantingNDWI.gt(-0.05)
+    .or(plantingLSWI.gt(0.0))
+    .or(plantingMNDWI.gt(-0.1));
 
-// 水田の検出 / Detect paddy fields
-// 水田の特徴:
-// 1. 田植え期: 低いNDVI、高いNDWI (水面)
-// 2. 生育期: 高いNDVI (緑の稲)
-// 3. 収穫前: 中程度のNDVI
-var paddyMask = plantingNDVI.lt(0.3)              // 田植え期の低NDVI
-  .and(plantingNDWI.gt(0.0))                      // 田植え期の高NDWI
-  .or(plantingLSWI.gt(0.0))                       // または高いLSWI
-  .and(growingNDVI.gt(0.4))                       // 生育期の高NDVI
-  .and(harvestNDVI.gt(0.3));                      // 収穫前の中程度のNDVI
+  var vegetationCondition = growingNDVI.gt(0.4);
 
-// SAR データによる補正 / SAR data correction
-if (s1.size().getInfo() > 0) {
-  var waterMask = s1Median.lt(-15);
-  paddyMask = paddyMask.or(waterMask.and(growingNDVI.gt(0.4)));
+  var seasonalCondition = plantingNDVI.lt(0.35);
+
+  var paddyMask = waterCondition
+    .and(vegetationCondition)
+    .and(seasonalCondition)
+    .and(harvestNDVI.gt(0.3));
+
+  // ノイズ除去 / Noise removal
+  paddyMask = paddyMask.focal_mode({radius: 30, units: 'meters'});
+
+  // マスクの適用 / Apply mask
+  paddyMask = paddyMask.selfMask();
+
+  return paddyMask.rename('paddy');
 }
 
-// ノイズ除去 / Noise removal
-paddyMask = paddyMask.focal_mode({radius: 30, units: 'meters'});
+// ==========================================
+// 4. 複数年次の処理
+// ==========================================
 
-// マスクの適用 / Apply mask
-paddyMask = paddyMask.selfMask();
+print('=== 岩手県水田検出システム（2018-2025） ===');
+print('=== Iwate Prefecture Paddy Detection System (2018-2025) ===');
 
-// 面積計算 / Calculate area
-var pixelArea = paddyMask.multiply(ee.Image.pixelArea());
-var areaStats = pixelArea.reduceRegion({
-  reducer: ee.Reducer.sum(),
-  geometry: iwateBounds,
-  scale: 10,
-  maxPixels: 1e13
+// 各年次の水田検出を実行 / Execute paddy detection for each year
+var paddyResults = [];
+var areaResults = [];
+
+years.forEach(function(year) {
+  var paddyMask = detectPaddyForYear(year);
+
+  // 面積計算 / Calculate area
+  var pixelArea = paddyMask.multiply(ee.Image.pixelArea());
+  var areaStats = pixelArea.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: iwateBounds,
+    scale: 10,
+    maxPixels: 1e13,
+    bestEffort: true,
+    tileScale: 2
+  });
+
+  var areaHectares = ee.Number(areaStats.get('paddy')).divide(10000);
+
+  paddyResults.push({
+    year: year,
+    image: paddyMask
+  });
+
+  // 面積結果を評価して表示 / Evaluate and display area results
+  areaHectares.evaluate(function(area) {
+    print(year + '年 水田面積 / Year ' + year + ' Paddy Area (ha):', area);
+  });
 });
 
-var areaSqMeters = areaStats.get('NDVI');
-var areaHectares = ee.Number(areaSqMeters).divide(10000);
+// ==========================================
+// 5. 地図の可視化
+// ==========================================
 
-print('==================================================');
-print('結果 / RESULTS');
-print('==================================================');
-print('検出された水田面積 / Detected Paddy Field Area:');
-print('  ヘクタール / Hectares:', areaHectares);
-print('  平方キロメートル / km²:', areaHectares.divide(100));
-print('==================================================');
-
-// 可視化 / Visualization
-
-// True Color画像 (生育期) / True Color image (growing period)
-var trueColorVis = {
-  min: 0,
-  max: 3000,
-  bands: ['B4', 'B3', 'B2']
+// 水田マスクの可視化設定 / Visualization settings for paddy mask
+var paddyColors = {
+  2018: '#8B0000', // Dark Red
+  2019: '#FF4500', // Orange Red
+  2020: '#FFA500', // Orange
+  2021: '#FFD700', // Gold
+  2022: '#ADFF2F', // Green Yellow
+  2023: '#00FA9A', // Medium Spring Green
+  2024: '#00CED1', // Dark Turquoise
+  2025: '#1E90FF'  // Dodger Blue
 };
-var trueColorImage = growingPeriod.median();
-Map.addLayer(trueColorImage.clip(iwateBounds), trueColorVis, 'Sentinel-2 RGB (Growing Period)', false);
 
-// NDVI (生育期) / NDVI (growing period)
-var ndviVis = {
-  min: -0.2,
-  max: 0.8,
-  palette: ['blue', 'white', 'green']
-};
-Map.addLayer(growingNDVI.clip(iwateBounds), ndviVis, 'NDVI (Growing Period)', false);
+// 各年次のレイヤーを追加 / Add layers for each year
+paddyResults.forEach(function(result) {
+  var year = result.year;
+  var image = result.image;
+  var isVisible = (year === 2024); // 2024年のみデフォルトで表示
 
-// 水田マスク / Paddy field mask
-var paddyVis = {
-  min: 0,
-  max: 1,
-  palette: ['yellow', 'green']
-};
-Map.addLayer(paddyMask.clip(iwateBounds), paddyVis, 'Detected Paddy Fields', true);
+  Map.addLayer(image.clip(iwateBounds), {
+    palette: [paddyColors[year]],
+    min: 0,
+    max: 1
+  }, year + '年 水田 / Year ' + year + ' Paddy', isVisible, 0.7);
+});
 
 // 岩手県の境界 / Iwate Prefecture boundary
-Map.addLayer(iwateBounds, {color: 'red'}, 'Iwate Boundary', true);
+Map.addLayer(iwateBounds, {color: 'red'}, '岩手県境界 / Iwate Boundary', true);
 
-// エクスポート設定 (オプション) / Export settings (optional)
-// 結果をGoogle Driveにエクスポートする場合は以下のコメントを解除
-// Uncomment below to export results to Google Drive
-/*
-Export.image.toDrive({
-  image: paddyMask.visualize(paddyVis),
-  description: 'iwate_paddy_fields_' + targetYear,
-  region: iwateBounds,
-  scale: 10,
-  maxPixels: 1e13
+// ==========================================
+// 6. 凡例の作成
+// ==========================================
+
+var legend = ui.Panel({
+  style: {
+    position: 'bottom-left',
+    padding: '8px 15px',
+    backgroundColor: 'white'
+  }
 });
-*/
 
-print('✓ 可視化完了 / Visualization complete');
-print('レイヤーパネルで各レイヤーの表示/非表示を切り替えられます');
-print('You can toggle layers on/off in the Layers panel');
+var legendTitle = ui.Label({
+  value: '年次別水田検出 / Annual Paddy Detection',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '16px',
+    margin: '0 0 8px 0'
+  }
+});
+
+legend.add(legendTitle);
+
+years.forEach(function(year) {
+  var colorBox = ui.Label({
+    style: {
+      backgroundColor: paddyColors[year],
+      padding: '8px',
+      margin: '0 8px 0 0'
+    }
+  });
+
+  var description = ui.Label({
+    value: year + '年 / Year ' + year,
+    style: {margin: '0 0 4px 6px'}
+  });
+
+  legend.add(
+    ui.Panel({
+      widgets: [colorBox, description],
+      layout: ui.Panel.Layout.Flow('horizontal')
+    })
+  );
+});
+
+Map.add(legend);
+
+// ==========================================
+// 7. GeoTIFFエクスポート設定
+// ==========================================
+
+print('');
+print('=== エクスポート準備完了 / Export Ready ===');
+print('Tasksタブから以下のファイルを実行できます:');
+print('You can run the following exports from the Tasks tab:');
+
+paddyResults.forEach(function(result) {
+  var year = result.year;
+  var image = result.image;
+
+  Export.image.toDrive({
+    image: image.byte(),
+    description: 'Iwate_Paddy_' + year,
+    folder: 'GEE_exports',
+    fileNamePrefix: 'iwate_paddy_' + year,
+    region: iwateBounds,
+    scale: 10,
+    crs: 'EPSG:4326',
+    fileFormat: 'GeoTIFF',
+    maxPixels: 1e13
+  });
+
+  print('  ' + year + ': iwate_paddy_' + year + '.tif');
+});
+
+// ==========================================
+// 8. 完了メッセージ
+// ==========================================
+
+print('');
+print('✓ 処理完了 / Processing complete');
+print('レイヤーパネルで各年次の表示/非表示を切り替えられます');
+print('You can toggle each year on/off in the Layers panel');
