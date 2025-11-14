@@ -69,12 +69,12 @@ var monthlyCollection = ee.ImageCollection.fromImages(monthlyComposites);
 print('月別画像数:', monthlyCollection.aggregate_array('count'));
 
 // 農地マスク（ESA WorldCoverから）
-var croplandMask = worldCover.eq(40);
+var croplandMask = worldCover.eq(40).clip(aoiBounds);
 
 // 地形条件（水田は平地に多い）
 var elevation = ee.Image('USGS/SRTMGL1_003').clip(aoiBounds);
-var slope = ee.Terrain.slope(elevation);
-var flatAreas = slope.lt(5); // 5度未満の傾斜
+var slope = ee.Terrain.slope(elevation).clip(aoiBounds);
+var flatAreas = slope.lt(5).clip(aoiBounds); // 5度未満の傾斜
 
 // ==========================================
 // 2025年7月干ばつ対応（降水量40mm = 平年の20%）
@@ -118,8 +118,7 @@ var juneNDVI = monthlyCollection
 var paddyMethod1 = preDroughtMNDWI.gt(-0.1)  // 0.0 → -0.1（さらに緩和）
   .and(postDroughtNDVI.gt(0.15))  // 0.25 → 0.15（大幅緩和）
   .and(croplandMask)
-  .and(flatAreas)
-  .clip(aoiBounds);
+  .and(flatAreas);
 
 // 【手法2】干ばつによる極端な落ち込みパターン
 // 論理: 6月→8月で極端に落ち込む = 7月干ばつの影響 = 水田の特徴
@@ -130,24 +129,21 @@ var june8Decline = juneNDVI.subtract(
 var paddyMethod2 = june8Decline.gt(0.05)  // 0.1 → 0.05（緩和）
   .and(preDroughtNDVI.gt(0.2))  // 0.3 → 0.2（緩和）
   .and(croplandMask)
-  .and(flatAreas)
-  .clip(aoiBounds);
+  .and(flatAreas);
 
 // 【手法3】春期重視（干ばつの影響を受けていない期間）
 // 論理: 春に水田の典型的特徴（水+初期植生）があれば水田
 var paddyMethod3 = preDroughtMNDWI.gt(-0.05)  // 0.05 → -0.05（大幅緩和）
   .and(preDroughtNDVI.gt(0.15).and(preDroughtNDVI.lt(0.7)))  // 0.25 → 0.15（緩和）
   .and(croplandMask)
-  .and(flatAreas)
-  .clip(aoiBounds);
+  .and(flatAreas);
 
 // 【手法4】NDVI時系列の高変動（4-10月全体）
 // 論理: 干ばつで極端な変動 = 水稲栽培の痕跡
 var ndviStdDev = monthlyCollection.select('NDVI').reduce(ee.Reducer.stdDev()).clip(aoiBounds);
 var paddyMethod4 = ndviStdDev.gt(0.08)  // 0.12 → 0.08（緩和）
   .and(croplandMask)
-  .and(flatAreas)
-  .clip(aoiBounds);
+  .and(flatAreas);
 
 // 【手法5】春の水 + わずかな干ばつ後植生
 // 論理: 春に水があり、干ばつ後にわずかでも植生 = 生き残った水田
@@ -155,43 +151,38 @@ var paddyMethod5 = preDroughtMNDWI.gt(-0.15)  // -0.05 → -0.15（大幅緩和�
   .and(postDroughtNDVI.gt(0.1))  // 0.2 → 0.1（大幅緩和）
   .and(preDroughtNDVI.gt(0.15))  // 0.2 → 0.15（緩和）
   .and(croplandMask)
-  .and(flatAreas)
-  .clip(aoiBounds);
+  .and(flatAreas);
 
 // 【手法6】6月ピーク法（干ばつ直前の最良状態）
 // 論理: 6月にピークがあり、その後低下 = 7月干ばつの影響
 var paddyMethod6 = juneNDVI.gt(0.25)  // 0.35 → 0.25（大幅緩和）
   .and(preDroughtMNDWI.gt(-0.1))  // 0.0 → -0.1（緩和）
   .and(croplandMask)
-  .and(flatAreas)
-  .clip(aoiBounds);
+  .and(flatAreas);
 
 // 【手法7】農地マスク内の平地（追加）
 // 論理: 農地で平地なら水田の可能性が高い（特に盛岡地域）
 var paddyMethod7 = croplandMask
   .and(flatAreas)
   .and(preDroughtNDVI.gt(0.1))  // 最低限の植生
-  .and(postDroughtNDVI.gt(0.05))  // 干ばつ後も何か残っている
-  .clip(aoiBounds);
+  .and(postDroughtNDVI.gt(0.05));  // 干ばつ後も何か残っている
 
 // 【手法8】春に水の痕跡があればOK（最も緩い）
 // 論理: 春に少しでも水があれば水田
 var paddyMethod8 = preDroughtMNDWI.gt(-0.2)  // 極めて緩い閾値
   .and(croplandMask)
   .and(flatAreas)
-  .and(preDroughtNDVI.gt(0.1).or(postDroughtNDVI.gt(0.1)))  // どちらかに植生
-  .clip(aoiBounds);
+  .and(preDroughtNDVI.gt(0.1).or(postDroughtNDVI.gt(0.1)));  // どちらかに植生
 
 // 全手法を組み合わせ（いずれか1つ以上に該当すれば水田）
 var methodSum = paddyMethod1.add(paddyMethod2).add(paddyMethod3)
   .add(paddyMethod4).add(paddyMethod5).add(paddyMethod6)
-  .add(paddyMethod7).add(paddyMethod8)
-  .clip(aoiBounds);
+  .add(paddyMethod7).add(paddyMethod8);
 
-var paddyFields = methodSum.gte(1).clip(aoiBounds);  // 1つ以上の手法で検出（かなり緩い）
+var paddyFields = methodSum.gte(1);  // 1つ以上の手法で検出（かなり緩い）
 
 // その他の農地（畑など）
-var otherCropland = croplandMask.and(paddyFields.not()).clip(aoiBounds);
+var otherCropland = croplandMask.and(paddyFields.not());
 
 
 // 地図の初期設定（ズームレベルを調整）
