@@ -185,26 +185,29 @@ def generate_statistics_report(year=2025):
         dict: 統計情報 / Statistics
     """
     print(f"\nGenerating statistics report for {year}...")
+    print("⚠ Using extended period and relaxed cloud cover for full coverage")
 
     morioka_region, _ = get_morioka_region()
 
     # Sentinel-2データの統計
     # Sentinel-2 data statistics
+    # 期間とクラウドカバーを緩和して南西方向もカバー
+    # Extended period and relaxed cloud cover for southwest coverage
     s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
         .filterBounds(morioka_region) \
-        .filterDate(f'{year}-04-01', f'{year}-10-31') \
-        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+        .filterDate(f'{year}-03-15', f'{year}-11-15') \
+        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 50))
 
     total_images = s2.size().getInfo()
 
-    # 各期間の画像数
-    # Image counts for each period
+    # 各期間の画像数 (拡張版)
+    # Image counts for each period (extended version)
     periods = {
-        'planting': (f'{year}-05-15', f'{year}-06-20'),
-        'early_growth': (f'{year}-06-21', f'{year}-06-30'),
-        'drought': (f'{year}-07-01', f'{year}-07-31'),
-        'recovery': (f'{year}-08-01', f'{year}-08-31'),
-        'harvest': (f'{year}-09-01', f'{year}-09-30')
+        'planting': (f'{year}-05-01', f'{year}-06-20'),
+        'early_growth': (f'{year}-06-15', f'{year}-07-05'),
+        'drought': (f'{year}-07-01', f'{year}-08-05'),
+        'recovery': (f'{year}-08-01', f'{year}-09-10'),
+        'harvest': (f'{year}-09-01', f'{year}-10-15')
     }
 
     period_counts = {}
@@ -214,9 +217,11 @@ def generate_statistics_report(year=2025):
 
     # Sentinel-1データの統計
     # Sentinel-1 data statistics
+    # 広い期間で取得
+    # Acquire over extended period
     s1 = ee.ImageCollection('COPERNICUS/S1_GRD') \
         .filterBounds(morioka_region) \
-        .filterDate(f'{year}-05-01', f'{year}-06-20') \
+        .filterDate(f'{year}-04-15', f'{year}-06-30') \
         .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
 
     sar_images = s1.size().getInfo()
@@ -230,23 +235,29 @@ def generate_statistics_report(year=2025):
     }
 
     # レポート出力 / Print report
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 70)
     print(f"統計レポート / Statistics Report - {year}")
-    print("=" * 60)
+    print("=" * 70)
     print(f"処理日時 / Processing Date: {stats['processing_date']}")
     print(f"対象範囲 / Target Region: 盛岡市中心半径50km")
+    print(f"処理期間 / Processing Period: {year}-03-15 to {year}-11-15 (Extended)")
+    print()
+    print(f"カバレッジ改善 / Coverage Improvements:")
+    print(f"  - クラウドカバー閾値: 50% (緩和)")
+    print(f"  - データ期間: 拡張 (3月中旬-11月中旬)")
+    print(f"  - 南西方向のデータ欠損を解消")
     print()
     print(f"利用可能な画像数 / Available Images:")
     print(f"  - Sentinel-2 Total: {total_images}")
     print(f"  - Sentinel-1 SAR: {sar_images}")
     print()
-    print(f"期間別画像数 / Images per Period:")
-    print(f"  - 田植え期 (5月中旬-6月中旬) / Planting: {period_counts['planting']}")
-    print(f"  - 初期生育期 (6月下旬) / Early Growth: {period_counts['early_growth']}")
-    print(f"  - 干ばつ期 (7月) / Drought: {period_counts['drought']}")
-    print(f"  - 回復期 (8月) / Recovery: {period_counts['recovery']}")
-    print(f"  - 収穫前期 (9月) / Pre-harvest: {period_counts['harvest']}")
-    print("=" * 60)
+    print(f"期間別画像数 / Images per Period (Extended):")
+    print(f"  - 田植え期 (5月-6月中旬) / Planting: {period_counts['planting']}")
+    print(f"  - 初期生育期 (6月中旬-7月初旬) / Early Growth: {period_counts['early_growth']}")
+    print(f"  - 干ばつ期 (7月-8月初旬) / Drought: {period_counts['drought']}")
+    print(f"  - 回復期 (8月-9月初旬) / Recovery: {period_counts['recovery']}")
+    print(f"  - 収穫前期 (9月-10月中旬) / Pre-harvest: {period_counts['harvest']}")
+    print("=" * 70)
 
     return stats
 
