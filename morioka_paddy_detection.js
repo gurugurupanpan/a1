@@ -2,7 +2,7 @@
 
 // ============================================================================
 // 修正点:
-// 1. バッファサイズを20km→40kmに拡大（盛岡市全体をカバー）
+// 1. バッファサイズを20kmに設定
 // 2. landCoverPaletteの定義を追加
 // 3. 地図のズームレベルを調整
 // ============================================================================
@@ -24,7 +24,7 @@ var landCoverPalette = [
 
 // 盛岡市の座標とエリア設定
 var morioka = ee.Geometry.Point([141.1527, 39.7036]);
-var aoiBounds = morioka.buffer(40000); // 40km半径に拡大（盛岡市全体をカバー）
+var aoiBounds = morioka.buffer(20000); // 20km半径
 
 // 対象期間の設定（水田の水張り期を含む）
 var startDate = '2025-04-01';
@@ -182,7 +182,7 @@ var otherCropland = croplandMask.and(paddyFields.not());
 
 
 // 地図の初期設定（ズームレベルを調整）
-Map.centerObject(aoiBounds, 10); // 盛岡市全体が見えるようズームレベルを調整
+Map.centerObject(aoiBounds, 11); // 20km半径に最適化
 
 // レイヤー追加
 Map.addLayer(worldCover, {
@@ -285,8 +285,8 @@ Map.addLayer(ndviStdDev, {
 // 盛岡市の位置
 Map.addLayer(morioka, {color: 'red'}, '盛岡市中心部');
 
-// AOIの境界を表示（盛岡市全体のカバー範囲を確認）
-Map.addLayer(aoiBounds, {color: 'blue'}, '解析範囲（40km半径）', true);
+// AOIの境界を表示（解析範囲を確認）
+Map.addLayer(aoiBounds, {color: 'blue'}, '解析範囲（20km半径）', true);
 
 // 面積計算
 var paddyArea = paddyFields.multiply(ee.Image.pixelArea()).rename('area');
@@ -308,10 +308,10 @@ var otherCropStats = otherCropArea.reduceRegion({
 
 // 結果出力
 print('==================================================');
-print('盛岡市周辺（40km圏内）の解析結果');
+print('盛岡市周辺（20km圏内）の解析結果');
 print('==================================================');
-print('盛岡市周辺（40km圏内）の水田面積 (m²):', paddyStats);
-print('盛岡市周辺（40km圏内）のその他農地面積 (m²):', otherCropStats);
+print('盛岡市周辺（20km圏内）の水田面積 (m²):', paddyStats);
+print('盛岡市周辺（20km圏内）のその他農地面積 (m²):', otherCropStats);
 
 // ヘクタールに変換して表示
 var paddyHa = ee.Number(paddyStats.get('area')).divide(10000);
@@ -342,5 +342,5 @@ print('全農地面積 (km²):', totalCropKm2);
 print('==================================================');
 
 print('✓ スクリプト実行完了');
-print('※ 解析範囲を40km半径に拡大し、盛岡市全体をカバーしています');
+print('※ 解析範囲は20km半径に設定されています');
 print('※ 地図上の青い円が解析範囲を示しています');
