@@ -39,6 +39,8 @@ pip install -r requirements.txt
 
 ## 使用方法 / Usage
 
+### 水田検出 / Paddy Field Detection
+
 ```bash
 # GEEの認証
 earthengine authenticate
@@ -47,9 +49,31 @@ earthengine authenticate
 python iwate_paddy_detection.py
 ```
 
+### GeoJSONファイルのマージ / Merging GeoJSON Files
+
+複数のGeoJSONファイルを一つのFeatureCollectionにまとめる場合:
+
+```bash
+# 基本的な使用方法
+python merge_geojson.py <入力ディレクトリ> [出力ファイル名]
+
+# 例: fude2025_03ディレクトリ内の全GeoJSONをマージ
+python merge_geojson.py ./fude2025_03
+
+# 出力ファイル名を指定
+python merge_geojson.py ./fude2025_03 merged_output.geojson
+```
+
+このツールは:
+- 指定ディレクトリ内の全ての.geojsonおよび.jsonファイルを検索
+- FeatureCollectionおよび単一Featureの両方に対応
+- マージ結果をArcGIS互換のGeoJSON形式で出力
+- 処理の進捗と統計情報を表示
+
 ## ファイル構成 / File Structure
 
 - `iwate_paddy_detection.py`: メインスクリプト / Main detection script
+- `merge_geojson.py`: GeoJSONファイルマージツール / GeoJSON merge tool
 - `requirements.txt`: 必要なPythonパッケージ / Required Python packages
 - `README.md`: このファイル / This file
 
