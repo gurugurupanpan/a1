@@ -145,12 +145,27 @@ program define kr_ci_fresh, rclass
     restore
 
     di as text "== Krinsky–Robb 95% confidence intervals (`reps' draws) =="
-    di as result `" WTP_MF^A (LFprefer=0):      ["' %9.3f WTP_MF_A0_l `", "' %9.3f WTP_MF_A0_u `"]"'
-    di as result `" WTP_MF^B (LFprefer=0):      ["' %9.3f WTP_MF_B0_l `", "' %9.3f WTP_MF_B0_u `"]"'
-    di as result `" ΔWTP_Fresh (LFprefer=0):    ["' %9.3f dWTP0_l `", "' %9.3f dWTP0_u `"]"'
-    di as result `" WTP_MF^A (LFprefer=1):      ["' %9.3f WTP_MF_A1_l `", "' %9.3f WTP_MF_A1_u `"]"'
-    di as result `" WTP_MF^B (LFprefer=1):      ["' %9.3f WTP_MF_B1_l `", "' %9.3f WTP_MF_B1_u `"]"'
-    di as result `" ΔWTP_Fresh (LFprefer=1):    ["' %9.3f dWTP1_l `", "' %9.3f dWTP1_u `"]"'
+
+    // フォーマット済みの値をローカルマクロに格納
+    local A0_l : display %9.3f WTP_MF_A0_l
+    local A0_u : display %9.3f WTP_MF_A0_u
+    local B0_l : display %9.3f WTP_MF_B0_l
+    local B0_u : display %9.3f WTP_MF_B0_u
+    local d0_l : display %9.3f dWTP0_l
+    local d0_u : display %9.3f dWTP0_u
+    local A1_l : display %9.3f WTP_MF_A1_l
+    local A1_u : display %9.3f WTP_MF_A1_u
+    local B1_l : display %9.3f WTP_MF_B1_l
+    local B1_u : display %9.3f WTP_MF_B1_u
+    local d1_l : display %9.3f dWTP1_l
+    local d1_u : display %9.3f dWTP1_u
+
+    di as result " WTP_MF^A (LFprefer=0):      [`A0_l', `A0_u']"
+    di as result " WTP_MF^B (LFprefer=0):      [`B0_l', `B0_u']"
+    di as result " ΔWTP_Fresh (LFprefer=0):    [`d0_l', `d0_u']"
+    di as result " WTP_MF^A (LFprefer=1):      [`A1_l', `A1_u']"
+    di as result " WTP_MF^B (LFprefer=1):      [`B1_l', `B1_u']"
+    di as result " ΔWTP_Fresh (LFprefer=1):    [`d1_l', `d1_u']"
 
     // --- テキストファイルへの保存（フォーマット文字列は display で作る） ---
     if ("`saving'" != "") {
@@ -187,12 +202,12 @@ program define kr_ci_fresh, rclass
         file write `myfile' "  WTP_MF^B (LFprefer=1)      = " `WTPB1' _n
         file write `myfile' "  ΔWTP_Fresh (LFprefer=1)    = " `dW1'   _n
         file write `myfile' "95% CIs (Krinsky–Robb):" _n
-        file write `myfile' `"  WTP_MF^A (LFprefer=0):     ["' `WTPA0_l' `", "' `WTPA0_u' `"]"' _n
-        file write `myfile' `"  WTP_MF^B (LFprefer=0):     ["' `WTPB0_l' `", "' `WTPB0_u' `"]"' _n
-        file write `myfile' `"  ΔWTP_Fresh (LFprefer=0):   ["' `dW0_l' `", "' `dW0_u' `"]"' _n
-        file write `myfile' `"  WTP_MF^A (LFprefer=1):     ["' `WTPA1_l' `", "' `WTPA1_u' `"]"' _n
-        file write `myfile' `"  WTP_MF^B (LFprefer=1):     ["' `WTPB1_l' `", "' `WTPB1_u' `"]"' _n
-        file write `myfile' `"  ΔWTP_Fresh (LFprefer=1):   ["' `dW1_l' `", "' `dW1_u' `"]"' _n _n
+        file write `myfile' "  WTP_MF^A (LFprefer=0):     [" `WTPA0_l' ", " `WTPA0_u' "]" _n
+        file write `myfile' "  WTP_MF^B (LFprefer=0):     [" `WTPB0_l' ", " `WTPB0_u' "]" _n
+        file write `myfile' "  ΔWTP_Fresh (LFprefer=0):   [" `dW0_l' ", " `dW0_u' "]" _n
+        file write `myfile' "  WTP_MF^A (LFprefer=1):     [" `WTPA1_l' ", " `WTPA1_u' "]" _n
+        file write `myfile' "  WTP_MF^B (LFprefer=1):     [" `WTPB1_l' ", " `WTPB1_u' "]" _n
+        file write `myfile' "  ΔWTP_Fresh (LFprefer=1):   [" `dW1_l' ", " `dW1_u' "]" _n _n
 
         file close `myfile'
     }
