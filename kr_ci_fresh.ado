@@ -160,12 +160,12 @@ program define kr_ci_fresh, rclass
     local d1_l : display %9.3f dWTP1_l
     local d1_u : display %9.3f dWTP1_u
 
-    di as result " WTP_MF^A (LFprefer=0):      [`A0_l', `A0_u']"
-    di as result " WTP_MF^B (LFprefer=0):      [`B0_l', `B0_u']"
-    di as result " ΔWTP_Fresh (LFprefer=0):    [`d0_l', `d0_u']"
-    di as result " WTP_MF^A (LFprefer=1):      [`A1_l', `A1_u']"
-    di as result " WTP_MF^B (LFprefer=1):      [`B1_l', `B1_u']"
-    di as result " ΔWTP_Fresh (LFprefer=1):    [`d1_l', `d1_u']"
+    di as result " WTP_MF^A (LFprefer=0):      [" `A0_l' ", " `A0_u' "]"
+    di as result " WTP_MF^B (LFprefer=0):      [" `B0_l' ", " `B0_u' "]"
+    di as result " ΔWTP_Fresh (LFprefer=0):    [" `d0_l' ", " `d0_u' "]"
+    di as result " WTP_MF^A (LFprefer=1):      [" `A1_l' ", " `A1_u' "]"
+    di as result " WTP_MF^B (LFprefer=1):      [" `B1_l' ", " `B1_u' "]"
+    di as result " ΔWTP_Fresh (LFprefer=1):    [" `d1_l' ", " `d1_u' "]"
 
     // --- テキストファイルへの保存（フォーマット文字列は display で作る） ---
     if ("`saving'" != "") {
