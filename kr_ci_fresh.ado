@@ -160,12 +160,12 @@ program define kr_ci_fresh, rclass
     local d1_l : display %9.3f dWTP1_l
     local d1_u : display %9.3f dWTP1_u
 
-    di as result " WTP_MF^A (LFprefer=0):      [" `A0_l' ", " `A0_u' "]"
-    di as result " WTP_MF^B (LFprefer=0):      [" `B0_l' ", " `B0_u' "]"
-    di as result " ΔWTP_Fresh (LFprefer=0):    [" `d0_l' ", " `d0_u' "]"
-    di as result " WTP_MF^A (LFprefer=1):      [" `A1_l' ", " `A1_u' "]"
-    di as result " WTP_MF^B (LFprefer=1):      [" `B1_l' ", " `B1_u' "]"
-    di as result " ΔWTP_Fresh (LFprefer=1):    [" `d1_l' ", " `d1_u' "]"
+    di as result " WTP_MF^A (LFprefer=0):      " `A0_l' " to " `A0_u'
+    di as result " WTP_MF^B (LFprefer=0):      " `B0_l' " to " `B0_u'
+    di as result " ΔWTP_Fresh (LFprefer=0):    " `d0_l' " to " `d0_u'
+    di as result " WTP_MF^A (LFprefer=1):      " `A1_l' " to " `A1_u'
+    di as result " WTP_MF^B (LFprefer=1):      " `B1_l' " to " `B1_u'
+    di as result " ΔWTP_Fresh (LFprefer=1):    " `d1_l' " to " `d1_u'
 
     // --- テキストファイルへの保存（フォーマット文字列は display で作る） ---
     if ("`saving'" != "") {
@@ -202,12 +202,12 @@ program define kr_ci_fresh, rclass
         file write `myfile' "  WTP_MF^B (LFprefer=1)      = " `WTPB1' _n
         file write `myfile' "  ΔWTP_Fresh (LFprefer=1)    = " `dW1'   _n
         file write `myfile' "95% CIs (Krinsky–Robb):" _n
-        file write `myfile' "  WTP_MF^A (LFprefer=0):     [" `WTPA0_l' ", " `WTPA0_u' "]" _n
-        file write `myfile' "  WTP_MF^B (LFprefer=0):     [" `WTPB0_l' ", " `WTPB0_u' "]" _n
-        file write `myfile' "  ΔWTP_Fresh (LFprefer=0):   [" `dW0_l' ", " `dW0_u' "]" _n
-        file write `myfile' "  WTP_MF^A (LFprefer=1):     [" `WTPA1_l' ", " `WTPA1_u' "]" _n
-        file write `myfile' "  WTP_MF^B (LFprefer=1):     [" `WTPB1_l' ", " `WTPB1_u' "]" _n
-        file write `myfile' "  ΔWTP_Fresh (LFprefer=1):   [" `dW1_l' ", " `dW1_u' "]" _n _n
+        file write `myfile' "  WTP_MF^A (LFprefer=0):     " `WTPA0_l' " to " `WTPA0_u' _n
+        file write `myfile' "  WTP_MF^B (LFprefer=0):     " `WTPB0_l' " to " `WTPB0_u' _n
+        file write `myfile' "  ΔWTP_Fresh (LFprefer=0):   " `dW0_l' " to " `dW0_u' _n
+        file write `myfile' "  WTP_MF^A (LFprefer=1):     " `WTPA1_l' " to " `WTPA1_u' _n
+        file write `myfile' "  WTP_MF^B (LFprefer=1):     " `WTPB1_l' " to " `WTPB1_u' _n
+        file write `myfile' "  ΔWTP_Fresh (LFprefer=1):   " `dW1_l' " to " `dW1_u' _n _n
 
         file close `myfile'
     }
