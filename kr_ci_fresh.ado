@@ -167,47 +167,27 @@ program define kr_ci_fresh, rclass
     di as result " WTP_MF^B (LFprefer=1):      " `B1_l' " to " `B1_u'
     di as result " ΔWTP_Fresh (LFprefer=1):    " `d1_l' " to " `d1_u'
 
-    // --- テキストファイルへの保存（フォーマット文字列は display で作る） ---
+    // --- テキストファイルへの保存 ---
     if ("`saving'" != "") {
         tempname myfile
         file open `myfile' using "`saving'", write text append
 
-        local WTPA0    : display %9.3f WTP_MF_A0
-        local WTPB0    : display %9.3f WTP_MF_B0
-        local dW0      : display %9.3f dWTP0
-        local WTPA1    : display %9.3f WTP_MF_A1
-        local WTPB1    : display %9.3f WTP_MF_B1
-        local dW1      : display %9.3f dWTP1
-
-        local WTPA0_l  : display %9.3f WTP_MF_A0_l
-        local WTPA0_u  : display %9.3f WTP_MF_A0_u
-        local WTPB0_l  : display %9.3f WTP_MF_B0_l
-        local WTPB0_u  : display %9.3f WTP_MF_B0_u
-        local dW0_l    : display %9.3f dWTP0_l
-        local dW0_u    : display %9.3f dWTP0_u
-
-        local WTPA1_l  : display %9.3f WTP_MF_A1_l
-        local WTPA1_u  : display %9.3f WTP_MF_A1_u
-        local WTPB1_l  : display %9.3f WTP_MF_B1_l
-        local WTPB1_u  : display %9.3f WTP_MF_B1_u
-        local dW1_l    : display %9.3f dWTP1_l
-        local dW1_u    : display %9.3f dWTP1_u
-
-        file write `myfile' "== WTP and ΔWTP (Krinsky–Robb, `reps' draws) ==" _n
-        file write `myfile' "Point estimates (JPY):" _n
-        file write `myfile' "  WTP_MF^A (LFprefer=0)      = " `WTPA0' _n
-        file write `myfile' "  WTP_MF^B (LFprefer=0)      = " `WTPB0' _n
-        file write `myfile' "  ΔWTP_Fresh (LFprefer=0)    = " `dW0'   _n
-        file write `myfile' "  WTP_MF^A (LFprefer=1)      = " `WTPA1' _n
-        file write `myfile' "  WTP_MF^B (LFprefer=1)      = " `WTPB1' _n
-        file write `myfile' "  ΔWTP_Fresh (LFprefer=1)    = " `dW1'   _n
-        file write `myfile' "95% CIs (Krinsky–Robb):" _n
-        file write `myfile' "  WTP_MF^A (LFprefer=0):     " `WTPA0_l' " to " `WTPA0_u' _n
-        file write `myfile' "  WTP_MF^B (LFprefer=0):     " `WTPB0_l' " to " `WTPB0_u' _n
-        file write `myfile' "  ΔWTP_Fresh (LFprefer=0):   " `dW0_l' " to " `dW0_u' _n
-        file write `myfile' "  WTP_MF^A (LFprefer=1):     " `WTPA1_l' " to " `WTPA1_u' _n
-        file write `myfile' "  WTP_MF^B (LFprefer=1):     " `WTPB1_l' " to " `WTPB1_u' _n
-        file write `myfile' "  ΔWTP_Fresh (LFprefer=1):   " `dW1_l' " to " `dW1_u' _n _n
+        file write `myfile' "=== Krinsky-Robb Results ===" _n
+        file write `myfile' "Point Estimates:" _n
+        file write `myfile' "WTP_MF_A0 = " %9.3f (WTP_MF_A0) _n
+        file write `myfile' "WTP_MF_B0 = " %9.3f (WTP_MF_B0) _n
+        file write `myfile' "dWTP0 = " %9.3f (dWTP0) _n
+        file write `myfile' "WTP_MF_A1 = " %9.3f (WTP_MF_A1) _n
+        file write `myfile' "WTP_MF_B1 = " %9.3f (WTP_MF_B1) _n
+        file write `myfile' "dWTP1 = " %9.3f (dWTP1) _n
+        file write `myfile' "95% Confidence Intervals:" _n
+        file write `myfile' "WTP_MF_A0: " %9.3f (WTP_MF_A0_l) " to " %9.3f (WTP_MF_A0_u) _n
+        file write `myfile' "WTP_MF_B0: " %9.3f (WTP_MF_B0_l) " to " %9.3f (WTP_MF_B0_u) _n
+        file write `myfile' "dWTP0: " %9.3f (dWTP0_l) " to " %9.3f (dWTP0_u) _n
+        file write `myfile' "WTP_MF_A1: " %9.3f (WTP_MF_A1_l) " to " %9.3f (WTP_MF_A1_u) _n
+        file write `myfile' "WTP_MF_B1: " %9.3f (WTP_MF_B1_l) " to " %9.3f (WTP_MF_B1_u) _n
+        file write `myfile' "dWTP1: " %9.3f (dWTP1_l) " to " %9.3f (dWTP1_u) _n
+        file write `myfile' _n
 
         file close `myfile'
     }
