@@ -70,6 +70,9 @@ program define kr_ci_fresh, rclass
         + `b'[1,`idx_mfpref'] + `b'[1,`idx_mlfpref'] + `b'[1,`idx_mltpref']
     scalar dWTP1     = WTP_MF_A1 - WTP_MF_B1        // = - b[MLT] - b[MLTpref]
 
+    // 平均 (LFpreferを固定しない)
+    scalar dWTP_avg  = (dWTP0 + dWTP1) / 2
+
     di as text "== WTP for MF from pooled Stage-2 model =="
     di as result " WTP_MF^A (LFprefer=0)      = " %9.3f WTP_MF_A0
     di as result " WTP_MF^B (LFprefer=0)      = " %9.3f WTP_MF_B0
@@ -77,6 +80,7 @@ program define kr_ci_fresh, rclass
     di as result " WTP_MF^A (LFprefer=1)      = " %9.3f WTP_MF_A1
     di as result " WTP_MF^B (LFprefer=1)      = " %9.3f WTP_MF_B1
     di as result " ΔWTP_Fresh (LFprefer=1)    = " %9.3f dWTP1
+    di as result " ΔWTP_Fresh (Average)       = " %9.3f dWTP_avg
 
     // --- Wald test （H0: ΔWTP = 0） ---
     di as text "== Wald tests for ΔWTP_Fresh =="
@@ -118,6 +122,7 @@ program define kr_ci_fresh, rclass
         gen double WTP_MF_A1 = WTP_MF_A0 + b`idx_mfpref' + b`idx_mlfpref'
         gen double WTP_MF_B1 = WTP_MF_B0 + b`idx_mfpref' + b`idx_mlfpref' + b`idx_mltpref'
         gen double dWTP1     = WTP_MF_A1 - WTP_MF_B1
+        gen double dWTP_avg  = (dWTP0 + dWTP1) / 2
 
         centile WTP_MF_A0, centile(2.5 97.5)
         scalar WTP_MF_A0_l = r(c_1)
@@ -142,6 +147,10 @@ program define kr_ci_fresh, rclass
         centile dWTP1, centile(2.5 97.5)
         scalar dWTP1_l = r(c_1)
         scalar dWTP1_u = r(c_2)
+
+        centile dWTP_avg, centile(2.5 97.5)
+        scalar dWTP_avg_l = r(c_1)
+        scalar dWTP_avg_u = r(c_2)
     restore
 
     di as text "== Krinsky–Robb 95% confidence intervals (`reps' draws) =="
@@ -159,6 +168,8 @@ program define kr_ci_fresh, rclass
     local B1_u : display %9.3f WTP_MF_B1_u
     local d1_l : display %9.3f dWTP1_l
     local d1_u : display %9.3f dWTP1_u
+    local davg_l : display %9.3f dWTP_avg_l
+    local davg_u : display %9.3f dWTP_avg_u
 
     di as result " WTP_MF^A (LFprefer=0):      " `A0_l' " to " `A0_u'
     di as result " WTP_MF^B (LFprefer=0):      " `B0_l' " to " `B0_u'
@@ -166,6 +177,7 @@ program define kr_ci_fresh, rclass
     di as result " WTP_MF^A (LFprefer=1):      " `A1_l' " to " `A1_u'
     di as result " WTP_MF^B (LFprefer=1):      " `B1_l' " to " `B1_u'
     di as result " ΔWTP_Fresh (LFprefer=1):    " `d1_l' " to " `d1_u'
+    di as result " ΔWTP_Fresh (Average):       " `davg_l' " to " `davg_u'
 
     // --- テキストファイルへの保存 ---
     if ("`saving'" != "") {
@@ -180,6 +192,7 @@ program define kr_ci_fresh, rclass
         file write `myfile' "WTP_MF_A1 = " %9.3f (WTP_MF_A1) _n
         file write `myfile' "WTP_MF_B1 = " %9.3f (WTP_MF_B1) _n
         file write `myfile' "dWTP1 = " %9.3f (dWTP1) _n
+        file write `myfile' "dWTP_avg = " %9.3f (dWTP_avg) _n
         file write `myfile' "95% Confidence Intervals:" _n
         file write `myfile' "WTP_MF_A0: " %9.3f (WTP_MF_A0_l) " to " %9.3f (WTP_MF_A0_u) _n
         file write `myfile' "WTP_MF_B0: " %9.3f (WTP_MF_B0_l) " to " %9.3f (WTP_MF_B0_u) _n
@@ -187,6 +200,7 @@ program define kr_ci_fresh, rclass
         file write `myfile' "WTP_MF_A1: " %9.3f (WTP_MF_A1_l) " to " %9.3f (WTP_MF_A1_u) _n
         file write `myfile' "WTP_MF_B1: " %9.3f (WTP_MF_B1_l) " to " %9.3f (WTP_MF_B1_u) _n
         file write `myfile' "dWTP1: " %9.3f (dWTP1_l) " to " %9.3f (dWTP1_u) _n
+        file write `myfile' "dWTP_avg: " %9.3f (dWTP_avg_l) " to " %9.3f (dWTP_avg_u) _n
         file write `myfile' _n
 
         file close `myfile'
@@ -199,6 +213,7 @@ program define kr_ci_fresh, rclass
     return scalar WTP_MF_A1   = WTP_MF_A1
     return scalar WTP_MF_B1   = WTP_MF_B1
     return scalar dWTP1       = dWTP1
+    return scalar dWTP_avg    = dWTP_avg
 
     return scalar WTP_MF_A0_l = WTP_MF_A0_l
     return scalar WTP_MF_A0_u = WTP_MF_A0_u
@@ -213,4 +228,7 @@ program define kr_ci_fresh, rclass
     return scalar WTP_MF_B1_u = WTP_MF_B1_u
     return scalar dWTP1_l     = dWTP1_l
     return scalar dWTP1_u     = dWTP1_u
+
+    return scalar dWTP_avg_l  = dWTP_avg_l
+    return scalar dWTP_avg_u  = dWTP_avg_u
 end
