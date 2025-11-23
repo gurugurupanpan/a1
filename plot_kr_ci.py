@@ -10,10 +10,10 @@ plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Noto Sans CJK JP', 'IPAexGoth
 plt.rcParams['axes.unicode_minus'] = False
 
 # Data from Krinsky-Robb CI results
-parameters = ['freshlabel', 'labelB', 'freshlabelB', 'asc', 'freshness', 'label']
-point_estimates = [437.024, 290.707, -398.607, 821.295, 127.283, -172.753]
-ci_lower = [329.937, 166.988, -555.682, 734.414, 32.294, -266.700]
-ci_upper = [545.796, 415.801, -244.501, 911.571, 220.769, -80.971]
+parameters = ['ASC', "MF (A' -A)", 'Label', 'MF × Label', 'Tasting label', 'MF × Tasting label']
+point_estimates = [821.295, 127.283, -172.753, 437.024, 290.707, -398.607]
+ci_lower = [734.414, 32.294, -266.700, 329.937, 166.988, -555.682]
+ci_upper = [911.571, 220.769, -80.971, 545.796, 415.801, -244.501]
 
 # Calculate error bars (distance from point estimate to CI bounds)
 lower_errors = [pe - cl for pe, cl in zip(point_estimates, ci_lower)]
