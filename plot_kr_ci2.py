@@ -25,7 +25,15 @@ fig, ax = plt.subplots(figsize=(14, 8))
 
 # Create horizontal bar chart with error bars
 y_pos = np.arange(len(parameters))
-colors = ['#2E86AB' if pe > 0 else '#A23B72' for pe in point_estimates]
+# Assign colors: gray for CI crossing zero, blue for positive, red for negative
+colors = []
+for pe, cl, cu in zip(point_estimates, ci_lower, ci_upper):
+    if cl < 0 and cu > 0:  # CI crosses zero
+        colors.append('#808080')  # Gray
+    elif pe > 0:
+        colors.append('#2E86AB')  # Blue
+    else:
+        colors.append('#A23B72')  # Red-purple
 
 bars = ax.barh(y_pos, point_estimates, color=colors, alpha=0.7, height=0.6)
 
