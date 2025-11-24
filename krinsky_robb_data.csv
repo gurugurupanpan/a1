@@ -1,0 +1,7 @@
+Parameter,Mean/Point Estimate,CI Lower Bound,CI Upper Bound,CI Width
+ASC,821.29,734.4,911.6,177.2
+MF (A'-A),127.28,32.3,220.8,188.5
+Label,-172.75,-266.7,-81.0,185.7
+MF × Label,437.02,329.9,545.8,215.9
+Tasting label,290.71,167.0,415.8,248.8
+MF × Tasting label,-398.61,-555.7,-244.5,311.2
