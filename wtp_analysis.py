@@ -89,11 +89,11 @@ def plot_confidence_intervals(df, output_file='wtp_confidence_intervals.png'):
         ax.plot(mean, i, 'D', color='darkblue', markersize=20)
 
         # Add text annotation below or above the mean point to avoid overlap
-        if i == 0:  # Top row (Overall) - place below
+        if i == 2:  # Bottom row (LFpref=1) - place below
             ax.text(mean, i - 0.38, f'Mean: {mean:.2f}\nCI: [{lower:.3f}, {upper:.3f}]',
                     ha='center', va='top', fontsize=27,
                     bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-        else:  # Middle and bottom rows (LFpref=0 and LFpref=1) - place above
+        else:  # Top and middle rows (Overall and LFpref=0) - place above
             ax.text(mean, i + 0.38, f'Mean: {mean:.2f}\nCI: [{lower:.3f}, {upper:.3f}]',
                     ha='center', va='bottom', fontsize=27,
                     bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
