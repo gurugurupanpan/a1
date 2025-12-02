@@ -65,7 +65,7 @@ def plot_confidence_intervals(df, output_file='wtp_confidence_intervals.png'):
         df: DataFrame containing WTP data
         output_file: Output filename for the plot
     """
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(18, 9))
 
     categories = df['Category'].tolist()
     means = df['Mean'].tolist()
@@ -84,20 +84,23 @@ def plot_confidence_intervals(df, output_file='wtp_confidence_intervals.png'):
     # Plot confidence intervals as horizontal lines
     for i, (cat, mean, lower, upper) in enumerate(zip(categories, means, ci_lower, ci_upper)):
         # CI line
-        ax.plot([lower, upper], [i, i], 'o-', color='skyblue', linewidth=2, markersize=8)
+        ax.plot([lower, upper], [i, i], 'o-', color='skyblue', linewidth=4, markersize=16)
         # Mean point
-        ax.plot(mean, i, 'D', color='darkblue', markersize=10)
+        ax.plot(mean, i, 'D', color='darkblue', markersize=20)
 
-        # Add text annotation
+        # Add text annotation with larger font size (3x)
         ax.text(upper + 20, i, f'Mean: {mean:.2f}\nCI: [{lower:.3f}, {upper:.3f}]',
-                va='center', fontsize=9, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+                va='center', fontsize=27, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
     ax.set_yticks(y_positions)
-    ax.set_yticklabels(categories_latex)
-    ax.set_xlabel('WTP Value', fontsize=12)
+    ax.set_yticklabels(categories_latex, fontsize=24)
+    ax.set_xlabel('WTP Value', fontsize=24)
     ax.set_title(r'Krinsky-Robb 95% Confidence Intervals for $\Delta WTP_{\mathit{Fresh}}$' + '\n(◆ = Mean/Point Estimate, Line = CI Range)',
-                 fontsize=14, fontweight='bold')
+                 fontsize=28, fontweight='bold')
     ax.grid(axis='x', alpha=0.3)
+
+    # Increase tick label size on x-axis
+    ax.tick_params(axis='x', labelsize=20)
 
     plt.tight_layout()
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
