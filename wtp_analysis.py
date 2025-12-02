@@ -1,6 +1,6 @@
 """
 WTP (Willingness to Pay) Confidence Intervals Analysis
-Krinsky-Robb 95% Confidence Intervals for AWTP_Fresh
+Krinsky-Robb 95% Confidence Intervals for ΔWTP_Fresh
 """
 
 import pandas as pd
@@ -74,6 +74,13 @@ def plot_confidence_intervals(df, output_file='wtp_confidence_intervals.png'):
 
     y_positions = range(len(categories))
 
+    # Convert category names to LaTeX format for better mathematical notation
+    categories_latex = []
+    for cat in categories:
+        # Replace ΔWTP_Fresh with proper LaTeX notation
+        cat_latex = cat.replace('ΔWTP_Fresh', r'$\Delta WTP_{\mathit{Fresh}}$')
+        categories_latex.append(cat_latex)
+
     # Plot confidence intervals as horizontal lines
     for i, (cat, mean, lower, upper) in enumerate(zip(categories, means, ci_lower, ci_upper)):
         # CI line
@@ -86,9 +93,9 @@ def plot_confidence_intervals(df, output_file='wtp_confidence_intervals.png'):
                 va='center', fontsize=9, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
     ax.set_yticks(y_positions)
-    ax.set_yticklabels(categories)
+    ax.set_yticklabels(categories_latex)
     ax.set_xlabel('WTP Value', fontsize=12)
-    ax.set_title('Krinsky-Robb 95% Confidence Intervals for WTP\n(◆ = Mean/Point Estimate, Line = CI Range)',
+    ax.set_title(r'Krinsky-Robb 95% Confidence Intervals for $\Delta WTP_{\mathit{Fresh}}$' + '\n(◆ = Mean/Point Estimate, Line = CI Range)',
                  fontsize=14, fontweight='bold')
     ax.grid(axis='x', alpha=0.3)
 
