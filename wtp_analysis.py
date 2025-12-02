@@ -88,9 +88,15 @@ def plot_confidence_intervals(df, output_file='wtp_confidence_intervals.png'):
         # Mean point
         ax.plot(mean, i, 'D', color='darkblue', markersize=20)
 
-        # Add text annotation with larger font size (3x)
-        ax.text(upper + 20, i, f'Mean: {mean:.2f}\nCI: [{lower:.3f}, {upper:.3f}]',
-                va='center', fontsize=27, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+        # Add text annotation below or above the mean point to avoid overlap
+        if i == 1:  # Middle row - place below
+            ax.text(mean, i - 0.38, f'Mean: {mean:.2f}\nCI: [{lower:.3f}, {upper:.3f}]',
+                    ha='center', va='top', fontsize=27,
+                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+        else:  # Top and bottom rows - place above
+            ax.text(mean, i + 0.38, f'Mean: {mean:.2f}\nCI: [{lower:.3f}, {upper:.3f}]',
+                    ha='center', va='bottom', fontsize=27,
+                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
     ax.set_yticks(y_positions)
     ax.set_yticklabels(categories_latex, fontsize=24)
