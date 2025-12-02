@@ -1,0 +1,4 @@
+Category,Mean,CI_Lower,CI_Upper,LFpref
+Overall ΔWTP_Fresh,398.61,244.501,555.682,All
+ΔWTP_Fresh(LFpref=0),200.37,0.036,400.236,0
+ΔWTP_Fresh(LFpref=1),696.97,505.629,884.414,1
