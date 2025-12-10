@@ -15,3 +15,15 @@ folium>=0.14.0
 
 # HTTP requests (for API interactions)
 requests>=2.31.0
+
+# ========================================
+# Citation Verification Tool Dependencies
+# ========================================
+
+# PDF parsing (at least one required)
+pymupdf>=1.23.0  # Recommended: faster and more accurate
+# pdfplumber>=0.10.0  # Alternative: better for tables
+
+# Google Drive integration (optional)
+google-auth-oauthlib>=1.1.0
+google-api-python-client>=2.100.0
