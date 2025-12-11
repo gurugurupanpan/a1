@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "citation-verifier": {
+      "command": "python",
+      "args": ["/home/user/a1/citation_verifier/mcp_server.py"]
+    }
+  }
+}
